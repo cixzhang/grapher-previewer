@@ -2,7 +2,7 @@
   "name": "grapher-previewer",
   "version": "0.0.0",
   "description": "Preview networks using Grapher.",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "test"
   },
@@ -15,8 +15,12 @@
     "url": "https://github.com/cixzhang/grapher-previewer/issues"
   },
   "dependencies": {
+    "browserify": "^11.1.0",
     "grapher": "git://github.com/ayasdi/grapher.git#1.1.1",
     "grapher-center": "git://github.com/ayasdi/grapher-center.git#0.0.2",
     "grapher-target": "git://github.com/ayasdi/grapher-target.git#0.0.2"
+  },
+  "scripts": {
+    "build": "browserify lib/index.js -o index.js -s Previewer"
   }
 }
