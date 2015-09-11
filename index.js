@@ -66,7 +66,7 @@ module.exports = (function () {
         .charge(-500).gravity(0).linkStrength(0.2)
         .linkDistance(55).friction(0.02);
 
-    setupForce(force);
+    setupForce();
     setupListeners();
     grapher.play();
   };
@@ -87,7 +87,7 @@ module.exports = (function () {
     return {nodes: nodes, links: links};
   };
 
-  var setupForce = function (force) {
+  var setupForce = function () {
     var data = grapher.data();
     force.nodes(data.nodes).links(data.links)
         .start();
