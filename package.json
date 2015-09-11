@@ -1,0 +1,22 @@
+{
+  "name": "grapher-previewer",
+  "version": "0.0.0",
+  "description": "Preview networks using Grapher.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cixzhang/grapher-previewer"
+  },
+  "author": "Cindy Zhang",
+  "bugs": {
+    "url": "https://github.com/cixzhang/grapher-previewer/issues"
+  },
+  "dependencies": {
+    "grapher": "git://github.com/ayasdi/grapher.git#1.1.1",
+    "grapher-center": "git://github.com/ayasdi/grapher-center.git#0.0.2",
+    "grapher-target": "git://github.com/ayasdi/grapher-target.git#0.0.2"
+  }
+}
