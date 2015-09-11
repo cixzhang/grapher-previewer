@@ -45,7 +45,7 @@ var generateData = require('./generateData.js'),
     parseJSON = require('./parseJSON.js');
 
 module.exports = (function () {
-  var viewport, grapher, canvas, textarea;
+  var viewport, grapher, canvas, textarea, force;
 
   var initialize = function () {
     var network = generateData();
@@ -54,7 +54,6 @@ module.exports = (function () {
 
     textarea = document.createElement('textarea');
     textarea.innerHTML = JSON.stringify(network, null, 1);
-    textarea.addEventListener('input', onInput);
 
     grapher = new Grapher({data: setupData(network)});
     canvas = grapher.canvas;
@@ -62,13 +61,19 @@ module.exports = (function () {
     viewport.appendChild(canvas);
     viewport.appendChild(textarea);
 
-    setupForce();
+    force = d3.layout.force()
+        .theta(0.99).chargeDistance(100)
+        .charge(-500).gravity(0).linkStrength(0.2)
+        .linkDistance(55).friction(0.02);
+
+    setupForce(force);
+    setupListeners();
     grapher.play();
   };
 
   var setupData = function (data) {
     var nodes = _.map(data.nodes, function (node) {
-      node.r = node.r || 6;
+      node.r = node.r || 4;
       node.weight = 1;
       return node;
     });
@@ -82,40 +87,32 @@ module.exports = (function () {
     return {nodes: nodes, links: links};
   };
 
-  var setupForce = function () {
+  var setupForce = function (force) {
+    var data = grapher.data();
+    force.nodes(data.nodes).links(data.links)
+        .start();
+  };
+
+  var setupListeners = function () {
     var dragging = null,
         offset = null;
 
-    var data = grapher.data();
-
-    var onTick = function () {
-      if (dragging && offset) {
-        // update the node's position here so it's sticky
-        dragging.node.x = offset.x;
-        dragging.node.y = offset.y;
+    textarea.addEventListener('input', _.debounce(function (e) {
+      var input = parseJSON(this.value);
+      if (input && checkData(input)) {
+        grapher.data(setupData(input));
+        grapher.update();
+        grapher.center();
+        setupForce();
       }
-      grapher.update(); // update the grapher
-    };
-
-    var force = d3.layout.force()
-        .nodes(data.nodes)
-        .links(data.links)
-        .on('tick', onTick)
-        .charge(-5000)
-        .gravity(0.005)
-        .linkStrength(0.2)
-        .linkDistance(100)
-        .friction(0.02)
-        .start();
-
-    grapher.off();
+    }, 400));
 
     grapher.on('mousedown', function (e) {
       var eOffset = getOffset(e);
       var point = grapher.getDataPosition(eOffset);
       var nodeId = grapher.target(point);
       if (nodeId > -1) {
-        dragging = {node: data.nodes[nodeId], id: nodeId};
+        dragging = {node: grapher.data().nodes[nodeId], id: nodeId};
         offset = point;
       }
       else dragging = offset = null;
@@ -129,31 +126,26 @@ module.exports = (function () {
         force.alpha(1); // restart the force graph
       }
     });
-
     // Finally when the user lets go of the mouse, we stop dragging
     grapher.on('mouseup', function (e) { dragging = offset = null; });
-  };
 
-  var onInput = _.debounce(function (e) {
-    var input = parseJSON(this.value);
-    if (input && checkData(input)) {
-      grapher.data(setupData(input));
-      grapher.update();
-      grapher.center();
-      setupForce();
-    }
-  }, 400);
+    // onTick, maintain dragged node's position
+    force.on('tick', function () {
+      if (dragging && offset) {
+        // update the node's position here so it's sticky
+        dragging.node.x = offset.x;
+        dragging.node.y = offset.y;
+      }
+      grapher.update(); // update the grapher
+    });
+  };
 
   function checkData (data) {
     if (!data.nodes || ! data.links) return false;
     if (!_.isArray(data.nodes) || !_.isArray(data.links)) return false;
 
-    var r = 6; // default radius
-
     var checkNode = function (node) {
-          var check = node && 'x' in node && 'y' in node;
-          if (check && !('r' in node)) node.r = r;
-          return check;
+          return node && 'x' in node && 'y' in node;
         };
     var checkLink = function (link) {
           return link && 'from' in link && 'to' in link &&
